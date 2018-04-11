@@ -80,7 +80,9 @@ xml:
 ```
 <br>
 <br>
+
 ## 歌词拖动监听：
+
 ```java
 
         mLrcView.setLrcViewSeekListener(new ILrcViewSeekListener() {
@@ -93,7 +95,9 @@ xml:
 ```
 <br>
 <br>
+
 ## 歌词跳柔和滑动转到指定时间：
+
 ```java
 //播放器播放时，时间更新后调用这个时歌词数据更新到当前对应的歌词，播放器一般时间更新以秒为频率更新
 mLrcView.smoothScrollToTime(time)//传递的数据是播放器的时间格式转化为long数据
