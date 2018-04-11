@@ -26,7 +26,7 @@ public class LrcView extends View implements ILrcView {
     private String NoDataMessage = "加载歌词中";
     private LrcViewContext lrcContext;//上下文
     private List<LrcRow> mRows;//行数据
-    private Boolean TextSizeAutomaticMode = false;
+    private Boolean TextSizeAutomaticMode = false;//是否文字自动适配界面
 
     public LrcView(Context context) {
         super(context);
@@ -40,17 +40,20 @@ public class LrcView extends View implements ILrcView {
 
     private void init() {
         lrcContext = new LrcViewContext(getContext());
+        lrcContext.initTextPaint();
     }
 
 
+    //手势
     private long ActionDownTimeMoment = 0;
     private float ActionFirstY = 0;
-    private float HightLightRowPositionY = 0;
-    private float TrySelectRowPositionY = 0;
-    private int HeightLightRowPosition = 0;
-    private int TrySelectRowPosition = 0;
-    private float FirstRowPositionY = 0;
-    private float DrawRowPositionY = 0;
+
+    private float HightLightRowPositionY = 0;//高亮行y位置
+    private float TrySelectRowPositionY = 0;//尝试选择行y位置
+    private int HeightLightRowPosition = 0;//高亮行位置
+    private int TrySelectRowPosition = 0;//尝试选择行位置
+    private float FirstRowPositionY = 0;//第一行y位置
+    private float DragRowPositionY = 0;//拖动行位置
 
     @SuppressLint("ClickableViewAccessibility")
     @Override
@@ -72,7 +75,9 @@ public class LrcView extends View implements ILrcView {
                 doSeek(event);
                 break;
             case MotionEvent.ACTION_UP:
+
                 if (lrcContext.CurrentState == Seeking) {
+
                     seekToPosition();
                 }
                 lrcContext.CurrentState = normal;
@@ -104,7 +109,7 @@ public class LrcView extends View implements ILrcView {
     }
 
     /**
-     * @param event 执行seek滑动
+     * @param event 执行拖动
      */
     private void doSeek(MotionEvent event) {
         lrcContext.CurrentState = Seeking;
@@ -116,6 +121,7 @@ public class LrcView extends View implements ILrcView {
         FirstRowPositionY = FirstRowPositionY + offsetY;
         //计算行数偏移量
         int rowOffset = Math.abs((int) (offsetY / lrcContext.setting.NormalRowTextSize));
+        //
         if (offsetY < 0) {
             TrySelectRowPosition += rowOffset;
         } else if (offsetY > 0) {
@@ -130,6 +136,13 @@ public class LrcView extends View implements ILrcView {
         ActionFirstY = currentY;
     }
 
+    /**
+     * 获取文字高度
+     *
+     * @param paint
+     * @param text
+     * @return
+     */
     private int getTextFontHeight(Paint paint, String text) {
         Rect rect = new Rect();
         paint.getTextBounds(text, 0, text.length(), rect);
@@ -148,8 +161,8 @@ public class LrcView extends View implements ILrcView {
 
     }
 
+    //
     private Boolean InitLrcRowDada = false;
-
     private Path TrianglePath = new Path();
 
     @Override
@@ -167,7 +180,6 @@ public class LrcView extends View implements ILrcView {
             }
             return;
         }
-
         //没有初始化，进行初始化
         if (!InitLrcRowDada) {
             InitLrcRowDada = true;
@@ -182,7 +194,7 @@ public class LrcView extends View implements ILrcView {
         makeFirstRowPositionSecure();
 
         //开始绘制行位置，从第一行开始
-        DrawRowPositionY = FirstRowPositionY;
+        DragRowPositionY = FirstRowPositionY;
 
         // 滑动的话画出时间线
         if (lrcContext.CurrentState == Seeking) {
@@ -218,18 +230,17 @@ public class LrcView extends View implements ILrcView {
 
         }
 
-        int RowPositionTop = (int) DrawRowPositionY;//该行的的top位置
-        int RowPositionBottom = (int) DrawRowPositionY;//该行的的bottom位置 用于判断是否是选中
+        int RowPositionTop;//该行的的top位置
+        int RowPositionBottom = (int) DragRowPositionY;//该行的的bottom位置 用于判断是否是选中
 
 
         // 画出歌词
         for (int i = 0; i < mRows.size(); i++) {
             LrcRow lrcRow = mRows.get(i);
-
-                if (i > 0) {
-                    RowPositionBottom = RowPositionBottom + getLrcSetting().LinePadding + lrcRow.ContentHeight;
-                }
-                RowPositionTop = RowPositionBottom - lrcRow.ContentHeight;
+            if (i > 0) {
+                RowPositionBottom = RowPositionBottom + getLrcSetting().LinePadding + lrcRow.ContentHeight;
+            }
+            RowPositionTop = RowPositionBottom - lrcRow.ContentHeight;
 
 
             if (lrcContext.CurrentState == LrcViewState.normal) {
@@ -261,30 +272,30 @@ public class LrcView extends View implements ILrcView {
     private void drawNormalRow(int rawIndex, LrcRow lrcRow, Canvas canvas, float rowX) {
         List<LrcShowRow> showRows = lrcRow.getShowRows();
         for (LrcShowRow sr : showRows) {
-            sr.YPosition = DrawRowPositionY;
+            sr.YPosition = DragRowPositionY;
             canvas.drawText(sr.Data + "", rowX, sr.YPosition, lrcContext.NormalRowPaint);
-            DrawRowPositionY += sr.RowHeight + sr.RowPadding;
+            DragRowPositionY += sr.RowHeight + sr.RowPadding;
         }
     }
 
     private void drawTrySelectRow(int rawIndex, LrcRow lrcRow, Canvas canvas, float rowX) {
         List<LrcShowRow> showRows = lrcRow.getShowRows();
         for (LrcShowRow sr : showRows) {
-            sr.YPosition = DrawRowPositionY;
+            sr.YPosition = DragRowPositionY;
             canvas.drawText(sr.Data + "", rowX, sr.YPosition, lrcContext.TrySelectRowPaint);
-            DrawRowPositionY += sr.RowHeight + sr.RowPadding;
+            DragRowPositionY += sr.RowHeight + sr.RowPadding;
         }
 
         TrySelectRowPosition = rawIndex;
-        TrySelectRowPositionY = DrawRowPositionY;
+        TrySelectRowPositionY = DragRowPositionY;
     }
 
     private void drawHeightLightRow(int rawIndex, LrcRow lrcRow, Canvas canvas, float rowX) {
         List<LrcShowRow> showRows = lrcRow.getShowRows();
         for (LrcShowRow sr : showRows) {
-            sr.YPosition = DrawRowPositionY;
+            sr.YPosition = DragRowPositionY;
             canvas.drawText(sr.Data + "", rowX, sr.YPosition, lrcContext.HeightLightRowPaint);
-            DrawRowPositionY += sr.RowHeight + sr.RowPadding;
+            DragRowPositionY += sr.RowHeight + sr.RowPadding;
         }
 
         if (showRows.size() > 0) {
@@ -344,7 +355,7 @@ public class LrcView extends View implements ILrcView {
 
                 } else {
                     //分隔空格
-                    int showRowHeight = getTextFontHeight(lrcContext.NormalRowPaint, "A")*2;
+                    int showRowHeight = getTextFontHeight(lrcContext.NormalRowPaint, "A") * 2;
                     r.ContentHeight = r.ContentHeight + showRowHeight + getLrcSetting().LinePadding;
                     LrcShowRow showRow = new LrcShowRow(index++, " ", showRowHeight, getLrcSetting().LinePadding);
                     r.getShowRows().add(showRow);
@@ -357,10 +368,6 @@ public class LrcView extends View implements ILrcView {
         }
     }
 
-    public void setTextSizeAutomaticMode(Boolean textSizeAutomaticMode) {
-        TextSizeAutomaticMode = textSizeAutomaticMode;
-        initLrcView();
-    }
 
     private void initLrcView() {
         if (TextSizeAutomaticMode) {
@@ -373,10 +380,6 @@ public class LrcView extends View implements ILrcView {
             getLrcSetting().LinePadding = textHeight;
         }
         lrcContext.initTextPaint();
-    }
-
-    public LrcViewSetting getLrcSetting() {
-        return lrcContext.setting;
     }
 
 
@@ -417,6 +420,12 @@ public class LrcView extends View implements ILrcView {
     private int automaticMoveAnimationDuration = 400;
     private ValueAnimator valueAnimator;
 
+    /**
+     * 执行移动动画
+     *
+     * @param trySelectRow
+     * @param trySelectRowIndex
+     */
     private void StartMoveAnimation(LrcRow trySelectRow, final int trySelectRowIndex) {
 
         //如果当前是高亮的话，不操作
@@ -434,7 +443,6 @@ public class LrcView extends View implements ILrcView {
         List<LrcShowRow> tryRs = trySelectRow.getShowRows();
 
         if (listIsEmpty(heightLightRs) || listIsEmpty(tryRs)) {
-
             return;
         }
 
@@ -477,36 +485,9 @@ public class LrcView extends View implements ILrcView {
         valueAnimator.start();
     }
 
-    public int getViewWidth() {
-        return getWidth();
-    }
-
-    public int getViewHeight() {
-        return getHeight();
-    }
-
-    public boolean hasData() {
-        return !listIsEmpty(mRows);
-    }
-
-    public void setNoDataMessage(String noDataMessage) {
-        NoDataMessage = noDataMessage;
-        postInvalidate();
-    }
-
-    private Boolean listIsEmpty(List<?> list) {
-        return list == null || list.size() == 0;
-    }
-
-    private int getTimeLineYPosition() {
-        return getViewHeight() / 2;
-    }
-
-    @Override
-    public void setCurrentTime(long time) {
-        seekLrcToTime(time);
-    }
-
+    /**
+     * @param time 拖动到指定时间
+     */
     public void seekLrcToTime(long time) {
 
         //no data do nothing
@@ -527,7 +508,6 @@ public class LrcView extends View implements ILrcView {
         for (int i = 0; i < mRows.size(); i++) {
             LrcRow current = mRows.get(i);
             LrcRow next = i + 1 == mRows.size() ? null : mRows.get(i + 1);
-
             if ((time >= current.CurrentRowTime && next != null && time < next.CurrentRowTime)
                     || (time > current.CurrentRowTime && next == null)) {
                 StartMoveAnimation(current, i);
@@ -537,11 +517,109 @@ public class LrcView extends View implements ILrcView {
 
     }
 
+
+    /**
+     * @return 显示宽度
+     */
+    public int getViewWidth() {
+        return getWidth();
+    }
+
+    /**
+     * @return 显示高度
+     */
+    public int getViewHeight() {
+        return getHeight();
+    }
+
+    public boolean hasData() {
+        return !listIsEmpty(mRows);
+    }
+
+    /**
+     * @param noDataMessage 设置显示信息文字
+     */
+    public void setNoDataMessage(String noDataMessage) {
+        NoDataMessage = noDataMessage;
+        postInvalidate();
+    }
+
+    /**
+     * @param list
+     * @return
+     */
+    private Boolean listIsEmpty(List<?> list) {
+        return list == null || list.size() == 0;
+    }
+
+    /**
+     * @return
+     */
+    private int getTimeLineYPosition() {
+        return getViewHeight() / 2;
+    }
+
+    /**
+     * @param time
+     */
+    @Override
+    public void smoothScrollToTime(long time) {
+        seekLrcToTime(time);
+    }
+
+    /**
+     * @return 获取设置
+     */
+    public LrcViewSetting getLrcSetting() {
+        return lrcContext.setting;
+    }
+
+    /**
+     * 提交设置
+     */
+    public void commitLrcSettings() {
+        lrcContext.initTextPaint();
+    }
+
+
+    /**
+     * @param textSizeAutomaticMode 是否使歌词自动文字大小自动适配
+     */
+    public void setTextSizeAutomaticMode(Boolean textSizeAutomaticMode) {
+        TextSizeAutomaticMode = textSizeAutomaticMode;
+        initLrcView();
+    }
+
+
+    /**
+     * @param automaticMoveAnimationDuration 歌词自动滑动时间速度
+     */
+    public void setAutomaticMoveAnimationDuration(int automaticMoveAnimationDuration) {
+        this.automaticMoveAnimationDuration = automaticMoveAnimationDuration;
+    }
+
+    /**
+     *
+     */
     public void onDestroy() {
         lrcContext.onDestroy();
         if (valueAnimator != null) {
             valueAnimator.cancel();
         }
         OnAnimation = false;
+    }
+
+    /**
+     * @return 获取歌词自动移动时间
+     */
+    public int getAutomaticMoveAnimationDuration() {
+        return automaticMoveAnimationDuration;
+    }
+
+    /**
+     * @return 获取相关数据
+     */
+    public LrcViewContext getLrcContext() {
+        return lrcContext;
     }
 }

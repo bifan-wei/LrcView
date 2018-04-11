@@ -1,5 +1,8 @@
 package com.hw.lrcviewlib;
 
+/**
+ * 显示行数据，每句歌词可能包括多个行数据，显示多行
+ */
 public class LrcShowRow implements Comparable<LrcShowRow> {
 	 String Data;// 行数据
 	 float RowHeight;// 行高度

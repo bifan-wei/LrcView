@@ -17,25 +17,58 @@ import java.util.List;
 public class LrcDataBuilder {
     private String tag = "LrcDataBuilder";
 
+    /**
+     * @param context
+     * @param fileName 文件名称
+     * @param parser 解析器
+     * @return
+     */
+    public List<LrcRow> BuiltFromAssets(Context context, String fileName, IRowsParser parser) {
+        return Build(LoadContentFromAssets(context, fileName), parser);
+    }
+
+    /**
+     * @param lrcFile 文件
+     * @param parser 解析器
+     * @return
+     */
+    public List<LrcRow> Build(File lrcFile, IRowsParser parser) {
+        return Build(LoadContentFromFile(lrcFile), parser);
+
+    }
+
+
+    /**
+     * @param context
+     * @param fileName
+     * @return
+     */
     public List<LrcRow> BuiltFromAssets(Context context, String fileName) {
-        return Build(LoadContentFromAssets(context, fileName));
+        return BuiltFromAssets(context, fileName, new DefaultLrcRowsParser());
     }
 
-    public List<LrcRow> Buile(File lrcFile) {
-        return Build(LoadContentFromFile(lrcFile));
+    /**
+     * @param lrcFile
+     * @return
+     */
+    public List<LrcRow> Build(File lrcFile) {
+        return Build(lrcFile, new DefaultLrcRowsParser());
 
     }
 
-    public List<LrcRow> Build(String rawLrc) {
-
-        if (TextUtils.isEmpty(rawLrc)) {
-            Log.e(tag, " lrcflie do not exist");
+    /**
+     * @param rawLrcStrData 歌词数据字符串
+     * @return 如果没有数据，返回null
+     */
+    public List<LrcRow> Build(String rawLrcStrData, IRowsParser parser) {
+        if (TextUtils.isEmpty(rawLrcStrData)) {
+            Log.e(tag, " lrcFile do not exist");
             return null;
         }
 
-        StringReader reader = new StringReader(rawLrc);
+        StringReader reader = new StringReader(rawLrcStrData);
         BufferedReader br = new BufferedReader(reader);
-        String line = null;
+        String line;
         List<LrcRow> rows = new ArrayList<LrcRow>();
         try {
             // 循环地读取歌词的每一行
@@ -44,7 +77,7 @@ public class LrcDataBuilder {
 
                 if (line != null && line.trim().length() > 0) {
                     // 解析每一行歌词 得到每行歌词的集合，因为有些歌词重复有多个时间，就可以解析出多个歌词行来
-                    List<LrcRow> lrcRows = createRows(line);
+                    List<LrcRow> lrcRows = parser.parse(line);
                     if (lrcRows != null && lrcRows.size() > 0) {
                         for (LrcRow row : lrcRows) {
                             rows.add(row);
@@ -56,15 +89,11 @@ public class LrcDataBuilder {
             if (rows.size() > 0) {
                 // 根据歌词行的时间排序
                 Collections.sort(rows);
-                for (LrcRow lrcRow : rows) {
-                    Log.d(tag, "lrcRow:" + lrcRow.toString());
-                }
-
-            }else{
-                Log.d(tag, "rows.size() ==0:" );
+            } else {
+                Log.d(tag, "rows.size() ==0:");
             }
         } catch (Exception e) {
-            Log.e(tag, "parse exceptioned:" + e.getMessage());
+            Log.e(tag, "歌词解析异常:" + e.getMessage());
             return null;
         } finally {
             try {
@@ -77,67 +106,16 @@ public class LrcDataBuilder {
         return rows;
     }
 
-    private List<LrcRow> createRows(String standardLrcLine) {
-
-        try {
-            // [01:15.33] 或者 [00:00]这种格式
-            Boolean Form1 = standardLrcLine.indexOf("[") == 0 && standardLrcLine.indexOf("]") == 9;
-            Boolean Form2 = standardLrcLine.indexOf("[") == 0 && standardLrcLine.indexOf("]") == 6;
-
-            if (!Form1 && !Form2) {
-                return null;
-            }
-
-            int lastIndexOfRightBracket = standardLrcLine.lastIndexOf("]");
-
-            String content = standardLrcLine.substring(lastIndexOfRightBracket + 1, standardLrcLine.length());
-
-
-            String times = standardLrcLine.substring(0, lastIndexOfRightBracket + 1).replace("[", "-").replace("]",
-                    "-");
-
-            String arrTimes[] = times.split("-");
-            List<LrcRow> listTimes = new ArrayList<LrcRow>();
-            for (String temp : arrTimes) {
-                if (temp.trim().length() == 0) {
-                    continue;
-                }
-
-                LrcRow lrcRow = new LrcRow(content, temp, timeConvert(temp));
-                listTimes.add(lrcRow);
-            }
-            return listTimes;
-        } catch (Exception e) {
-            Log.e(tag, "createRows exception:" + e.getMessage());
-            return null;
-        }
-    }
 
     /**
-     * 将解析得到的表示时间的字符转化为Long型
+     * @param file
+     * @return
      */
-    private long timeConvert(String timeString) {
-        // 因为给如的字符串的时间格式为XX:XX.XX,返回的long要求是以毫秒为单位
-        // 将字符串 XX:XX.XX 转换为 XX:XX:XX
-        timeString = timeString.replace('.', ':');
-        // 将字符串 XX:XX:XX 拆分
-        String[] times = timeString.split(":");
-        // mm:ss:SS
-        if (times.length == 3)
-            return Integer.valueOf(times[0]) * 60 * 1000 + // 分
-                    Integer.valueOf(times[1]) * 1000 + // 秒
-                    Integer.valueOf(times[2]);// 毫秒
-        // mm:ss
-        return Integer.valueOf(times[0]) * 60 * 1000 + // 分
-                Integer.valueOf(times[1]) * 1000;// 秒
-    }
-
     private String LoadContentFromFile(File file) {
         try {
             InputStreamReader inputReader = new InputStreamReader(new FileInputStream(file), "utf-8");
-            @SuppressWarnings("resource")
             BufferedReader bufReader = new BufferedReader(inputReader);
-            String line = "";
+            String line;
             String result = "";
             while ((line = bufReader.readLine()) != null) {
                 if (line.trim().equals(""))
@@ -151,11 +129,16 @@ public class LrcDataBuilder {
         return null;
     }
 
+    /**
+     * @param context
+     * @param fileName
+     * @return
+     */
     private String LoadContentFromAssets(Context context, String fileName) {
         try {
             InputStreamReader inputReader = new InputStreamReader(context.getResources().getAssets().open(fileName));
             BufferedReader bufReader = new BufferedReader(inputReader);
-            String line = "";
+            String line;
             String result = "";
             while ((line = bufReader.readLine()) != null) {
                 if (line.trim().equals(""))

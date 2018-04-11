@@ -9,8 +9,8 @@ import android.graphics.Color;
 public class LrcViewSetting {
 
     public int LinePadding = 40;// in px
-    public int RowPaddingLeft = 10;//
-    public int RowPaddingRight = 10;//
+    public int RowPaddingLeft = 10;//行左padding
+    public int RowPaddingRight = 10;//行右padding
 
     public int TimeTextPaddingRight = 10;// 时间文字距右距离
     public int TimeTextPaddingLeft = 10;// 时间文字距左距离
@@ -24,12 +24,14 @@ public class LrcViewSetting {
     public int SelectLineTextSize = 27;// in px
     public int TimeTextSize = 27;// in px
 
+
     public int NormalRowColor = Color.WHITE;// 正常行字体颜色
     public int HeightRowColor = Color.YELLOW;// 高亮行字体颜色
     public int TrySelectRowColor = Color.GRAY;// 尝试选择行字体颜色
     public int MessageColor = Color.YELLOW;// 信息字体颜色
     public int SelectLineColor = Color.GRAY;// 选择线颜色
     public int TimeTextColor = Color.GRAY;// 选择线颜色
+
 
     public LrcViewSetting setLinePadding(int linePadding) {
         LinePadding = linePadding;
@@ -125,4 +127,6 @@ public class LrcViewSetting {
         TimeTextColor = timeTextColor;
         return this;
     }
+
+
 }
