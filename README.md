@@ -6,14 +6,16 @@
 <br>
 <br>
 
- # 支持效果有：
+ ## 支持效果有：
  
- ## 柔和的滑动到指定时间歌词。
- ## 手势拖动歌词控件，释放手势跳转歌词。
- ## 提供自定义歌词大小字体颜色等，方便自定义界面。
- ## 对于超长歌词换行显示。
+ 1.柔和的滑动到指定时间歌词。
+ 2.手势拖动歌词控件，释放手势跳转歌词。
+ 3. 提供自定义歌词大小字体颜色等，方便自定义界面。
+ 4.对于超长歌词换行显示。
+ 
  <br>
  <br>
+ 
 ![imag](https://github.com/bifan-wei/LrcView/blob/master/lrcView.gif)
 
 ![imag](https://github.com/bifan-wei/LrcView/blob/master/lrcviewPic.png)
