@@ -1,22 +1,27 @@
 # LrcView
 <br>
+<br>
+
 这是使用非常简单而且效果还不错的Android歌词控件，只需要传递歌词文件，即可实现类似网易云音乐的歌词效果
 <br>
- # 支持效果有：
- ## 1.柔和的滑动到指定时间歌词。
- ## 2.手势拖动歌词控件，释放手势跳转歌词。
- ## 3.提供自定义歌词大小字体颜色等，方便自定义界面。
- ## 4.对于超长歌词换行显示。
+<br>
 
+ # 支持效果有：
+ 
+ ## 柔和的滑动到指定时间歌词。
+ ## 手势拖动歌词控件，释放手势跳转歌词。
+ ## 提供自定义歌词大小字体颜色等，方便自定义界面。
+ ## 对于超长歌词换行显示。
+ <br>
+ <br>
 ![imag](https://github.com/bifan-wei/LrcView/blob/master/lrcView.gif)
 
 ![imag](https://github.com/bifan-wei/LrcView/blob/master/lrcviewPic.png)
 
 <br>
 <br>
+
 # 使用方法：
-<br>
-<br>
 
 ## 依赖
 
@@ -31,7 +36,7 @@ allprojects {
 
 
 dependencies {
-	        compile 'com.github.bifan-wei:LrcView:v1.0'
+	        compile 'com.github.bifan-wei:LrcView:V1.1'
 	}
 ```
 
@@ -72,6 +77,7 @@ xml:
         mLrcView.setLrcData(lrcRows);
 ```
 <br>
+<br>
 ## 歌词拖动监听：
 ```java
 
@@ -83,6 +89,7 @@ xml:
             }
         });
 ```
+<br>
 <br>
 ## 歌词跳柔和滑动转到指定时间：
 ```java
