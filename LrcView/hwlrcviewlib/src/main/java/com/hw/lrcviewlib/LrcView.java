@@ -46,6 +46,7 @@ public class LrcView extends View implements ILrcView {
 
     //手势
     private long ActionDownTimeMoment = 0;
+    private float ActionDownY = 0;
     private float ActionFirstY = 0;
 
     private float HightLightRowPositionY = 0;//高亮行y位置
@@ -66,7 +67,8 @@ public class LrcView extends View implements ILrcView {
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
                 //记录点击下的位置与时刻
-                ActionFirstY = event.getY();
+                ActionDownY = event.getY();
+                ActionFirstY = ActionDownY;
                 ActionDownTimeMoment = System.currentTimeMillis();
                 invalidate();
                 break;
@@ -76,8 +78,9 @@ public class LrcView extends View implements ILrcView {
                 break;
             case MotionEvent.ACTION_UP:
 
-                if (lrcContext.CurrentState == Seeking) {
+                float moveDistance = event.getY() - ActionDownY;
 
+                if (lrcContext.CurrentState == Seeking && (moveDistance > 5 || moveDistance < -5)) {
                     seekToPosition();
                 }
                 lrcContext.CurrentState = normal;
@@ -328,7 +331,22 @@ public class LrcView extends View implements ILrcView {
     public void setLrcData(List<LrcRow> lrcRows) {
         InitLrcRowDada = false;
         mRows = lrcRows;
+        //初始化
+        initData();
+        //刷新
         postInvalidate();
+    }
+
+    private void initData() {
+        ActionDownTimeMoment = 0;
+        ActionDownY = 0;
+        ActionFirstY = 0;
+        HightLightRowPositionY = 0;//高亮行y位置
+        TrySelectRowPositionY = 0;//尝试选择行y位置
+        HeightLightRowPosition = 0;//高亮行位置
+        TrySelectRowPosition = 0;//尝试选择行位置
+        FirstRowPositionY = 0;//第一行y位置
+        DragRowPositionY = 0;//拖动行位置
     }
 
     int TriangleWidth = 0;
@@ -434,6 +452,11 @@ public class LrcView extends View implements ILrcView {
         }
         //为空不操作
         if (trySelectRow == null) {
+            return;
+        }
+
+        //判断下是否越界
+        if (mRows == null || HeightLightRowPosition >= mRows.size()) {
             return;
         }
 
