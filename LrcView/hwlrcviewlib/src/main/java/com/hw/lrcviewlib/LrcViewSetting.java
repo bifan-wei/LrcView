@@ -16,6 +16,8 @@ public class LrcViewSetting {
     public int TimeTextPaddingLeft = 10;// 时间文字距左距离
     public int SelectLinePaddingTextTop = 10;// 时间线距离时间文字
     public int SelectLinePaddingTextLeft = 10;// 时间线距离时间文字
+    public int SelectLinePaddingLeft = 10;// 时间线距离左边
+    public int SelectLinePaddingRight= 10;// 时间线距离右边
 
     public int NormalRowTextSize = 47;// in px
     public int HeightLightRowTextSize = 67;// in px
@@ -23,7 +25,7 @@ public class LrcViewSetting {
     public int MessagePaintTextSize = 27;// in px
     public int SelectLineTextSize = 27;// in px
     public int TimeTextSize = 27;// in px
-
+    public int TriangleWidth = 0;// in px
 
     public int NormalRowColor = Color.WHITE;// 正常行字体颜色
     public int HeightRowColor = Color.YELLOW;// 高亮行字体颜色
@@ -31,6 +33,9 @@ public class LrcViewSetting {
     public int MessageColor = Color.YELLOW;// 信息字体颜色
     public int SelectLineColor = Color.GRAY;// 选择线颜色
     public int TimeTextColor = Color.GRAY;// 选择线颜色
+    public Boolean ShowTimeText = true;
+    public Boolean ShowTriangle = true;
+    public Boolean ShowSelectLine = true;
 
 
     public LrcViewSetting setLinePadding(int linePadding) {
@@ -63,8 +68,24 @@ public class LrcViewSetting {
         return this;
     }
 
+
+
     public LrcViewSetting setSelectLinePaddingTextLeft(int selectLinePaddingTextLeft) {
         SelectLinePaddingTextLeft = selectLinePaddingTextLeft;
+        return this;
+    }
+    public LrcViewSetting setSelectLinePaddingLeft(int selectLinePaddingLeft) {
+        SelectLinePaddingLeft= selectLinePaddingLeft;
+        return this;
+    }
+
+
+    public LrcViewSetting setSelectLinePaddingRight(int selectLinePaddingRight) {
+        SelectLinePaddingRight = selectLinePaddingRight;
+        return this;
+    }
+    public LrcViewSetting setTriangleWidth(int triangleWidth) {
+        TriangleWidth = triangleWidth;
         return this;
     }
 
@@ -128,5 +149,17 @@ public class LrcViewSetting {
         return this;
     }
 
+    public LrcViewSetting setShowTimeText(Boolean showTimeText) {
+        ShowTimeText = showTimeText;
+        return this;
+    }
+    public LrcViewSetting setShowTriangle(Boolean showTriangle) {
+        ShowTriangle = showTriangle;
+        return this;
+    }
 
+    public LrcViewSetting setShowSelectLine(Boolean showSelectLine) {
+        ShowSelectLine = showSelectLine;
+        return this;
+    }
 }

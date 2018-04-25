@@ -32,7 +32,7 @@ public class LrcViewContext {
 
     private void initTimeText() {
         TimeTextPaint = new Paint();
-        setPaint(TimeTextPaint, Align.CENTER, setting.TimeTextSize, setting.TimeTextColor);
+        setPaint(TimeTextPaint, Align.LEFT, setting.TimeTextSize, setting.TimeTextColor);
     }
 
     private void initSelectLinePaint() {

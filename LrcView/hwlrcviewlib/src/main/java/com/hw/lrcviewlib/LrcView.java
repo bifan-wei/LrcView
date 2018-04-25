@@ -73,22 +73,35 @@ public class LrcView extends View implements ILrcView {
                 invalidate();
                 break;
             case MotionEvent.ACTION_MOVE:
+                float Distance = event.getY() - ActionDownY;
+                if (Math.abs(Distance) > 5) {
+                    lrcContext.CurrentState = Seeking;
+                    doSeek(event);
+                } else {
+                    lrcContext.CurrentState = normal;
+                }
                 //滑动
-                doSeek(event);
+
                 break;
             case MotionEvent.ACTION_UP:
-
                 float moveDistance = event.getY() - ActionDownY;
-
-                if (lrcContext.CurrentState == Seeking && (moveDistance > 5 || moveDistance < -5)) {
-                    seekToPosition();
+                LrcShowRow lastShowRow = getLastShowRow();
+                //不允许滑动过头，超过中间区域说明滑过头了
+                if (lastShowRow != null && lastShowRow.YPosition <= getViewHeight() / 2) {
+                } else {
+                    if (lrcContext.CurrentState == Seeking && (moveDistance > 5 || moveDistance < -5)) {
+                        seekToPosition();
+                    }
                 }
-                lrcContext.CurrentState = normal;
+
                 Boolean NeedPerformClick = System.currentTimeMillis() - ActionDownTimeMoment < 200;
                 //判断到是否需要进行点击事件，如果滑动时间过短，那就是点击事件
-                if (NeedPerformClick) {
+                if (NeedPerformClick && lrcContext.CurrentState == normal) {
                     DoClick();
                 }
+
+                lrcContext.CurrentState = normal;
+
                 invalidate();
                 break;
         }
@@ -115,28 +128,62 @@ public class LrcView extends View implements ILrcView {
      * @param event 执行拖动
      */
     private void doSeek(MotionEvent event) {
-        lrcContext.CurrentState = Seeking;
 
         float currentY = event.getY();
+        LrcShowRow lastShowRow = getLastShowRow();
+
         // y移动偏移量
         float offsetY = currentY - ActionFirstY;
         //计算出第一行显示的位置
         FirstRowPositionY = FirstRowPositionY + offsetY;
-        //计算行数偏移量
-        int rowOffset = Math.abs((int) (offsetY / lrcContext.setting.NormalRowTextSize));
-        //
-        if (offsetY < 0) {
-            TrySelectRowPosition += rowOffset;
-        } else if (offsetY > 0) {
-            TrySelectRowPosition -= rowOffset;
 
+        if (lastShowRow != null && lastShowRow.YPosition < getViewHeight() / 3) {
+            //超过了最大上滑动范围
+            if (offsetY < 0) {//这时不允许上滑动了
+                FirstRowPositionY = FirstRowPositionY - offsetY;
+            }
+        } else {
+            //计算行数偏移量
+            int rowOffset = Math.abs((int) (offsetY / lrcContext.setting.NormalRowTextSize));
+            //
+            if (offsetY < 0) {
+                TrySelectRowPosition += rowOffset;
+            } else if (offsetY > 0) {
+                TrySelectRowPosition -= rowOffset;
+
+            }
+
+            TrySelectRowPosition = Math.max(0, TrySelectRowPosition);
+            TrySelectRowPosition = Math.min(TrySelectRowPosition, mRows.size() - 1);
         }
 
-        TrySelectRowPosition = Math.max(0, TrySelectRowPosition);
-        TrySelectRowPosition = Math.min(TrySelectRowPosition, mRows.size() - 1);
         makeFirstRowPositionSecure();
         invalidate();
         ActionFirstY = currentY;
+
+    }
+
+    /**
+     * @return 可能返回null
+     */
+    private LrcShowRow getLastShowRow() {
+        if (mRows != null && mRows.size() > 0) {
+            LrcRow lastRow = null;
+            for (int i = mRows.size() - 1; i >= 0; i--) {
+                lastRow = mRows.get(i);
+                if (lastRow.hasData()) {
+                    break;
+                }
+            }
+
+            if (lastRow != null && lastRow.getShowRows() != null && lastRow.getShowRows().size() > 0) {
+                LrcShowRow showRow = lastRow.getShowRows().get(lastRow.getShowRows().size() - 1);
+                return showRow;
+            }
+
+
+        }
+        return null;
     }
 
     /**
@@ -200,36 +247,45 @@ public class LrcView extends View implements ILrcView {
         DragRowPositionY = FirstRowPositionY;
 
         // 滑动的话画出时间线
-        if (lrcContext.CurrentState == Seeking) {
+        if (lrcContext.CurrentState == Seeking && getLrcSetting() != null) {
 
             LrcRow TrySelectRow = mRows.get(TrySelectRowPosition);
             String TrySelectTimeText = TrySelectRow.TimeText + "";
 
-            // 画出时间文字
-            int height = getTextFontHeight(lrcContext.TimeTextPaint, TrySelectTimeText);
-            canvas.drawText(TrySelectTimeText,
-                    getLrcSetting().TimeTextPaddingLeft,
-                    timeLineY + height / 2,
-                    lrcContext.TimeTextPaint);
             float lStartX =
                     +getLrcSetting().TimeTextPaddingRight
                             + getLrcSetting().TimeTextPaddingLeft
                             + MeasureText(TrySelectTimeText, lrcContext.TimeTextPaint);
+            // 画出时间文字
+            int height = getTextFontHeight(lrcContext.TimeTextPaint, TrySelectTimeText);
+            if (getLrcSetting().ShowTimeText) {
+                canvas.drawText(TrySelectTimeText,
+                        getLrcSetting().TimeTextPaddingLeft,
+                        timeLineY + height / 2,
+                        lrcContext.TimeTextPaint);
+            } else {
+                lStartX = getLrcSetting().SelectLinePaddingLeft;
+            }
+
 
             float lStartY = timeLineY;
-            float lStopX = ViewWidth;
+            float lStopX = ViewWidth - getLrcSetting().SelectLinePaddingRight;
             float lStopY = lStartY;
 
+            if (getLrcSetting().ShowSelectLine) {
+                //画出时间线
+                canvas.drawLine(lStartX, lStartY, lStopX, lStopY, lrcContext.SelectLinePaint);
+            }
 
-            //画出时间线
-            canvas.drawLine(lStartX, lStartY, lStopX, lStopY, lrcContext.SelectLinePaint);
-            TriangleWidth = getViewWidth() / 45;
-
-            //画出三角形
-            TrianglePath.moveTo(lStopX, lStopY - TriangleWidth);
-            TrianglePath.lineTo(lStopX - TriangleWidth, lStopY);
-            TrianglePath.lineTo(lStopX + TriangleWidth, lStopY + TriangleWidth);
-            canvas.drawPath(TrianglePath, lrcContext.SelectLinePaint);
+            if (getLrcSetting().ShowTriangle) {
+                int TriangleWidth = getLrcSetting().TriangleWidth;
+                //画出三角形
+                TrianglePath.moveTo(lStopX, lStopY - TriangleWidth);
+                TrianglePath.lineTo((float) (lStopX - TriangleWidth * 1.3), lStopY);
+                TrianglePath.lineTo(lStopX, lStopY + TriangleWidth);
+                TrianglePath.lineTo(lStopX, lStopY - TriangleWidth);
+                canvas.drawPath(TrianglePath, lrcContext.SelectLinePaint);
+            }
 
         }
 
@@ -349,7 +405,6 @@ public class LrcView extends View implements ILrcView {
         DragRowPositionY = 0;//拖动行位置
     }
 
-    int TriangleWidth = 0;
 
     /**
      * @param lrcRows
@@ -390,12 +445,15 @@ public class LrcView extends View implements ILrcView {
     private void initLrcView() {
         if (TextSizeAutomaticMode) {
             int textHeight = getViewHeight() / 20 - getLrcSetting().LinePadding;
-            TriangleWidth = getViewWidth() / 50;
             getLrcSetting().NormalRowTextSize = textHeight;
             getLrcSetting().HeightLightRowTextSize = textHeight;
             getLrcSetting().TrySelectRowTextSize = textHeight;
             getLrcSetting().TimeTextSize = textHeight * 2 / 3;
             getLrcSetting().LinePadding = textHeight;
+        }
+
+        if (getLrcSetting().TriangleWidth <= 0) {
+            getLrcSetting().TriangleWidth = getViewWidth() / 50;
         }
         lrcContext.initTextPaint();
     }
@@ -602,6 +660,10 @@ public class LrcView extends View implements ILrcView {
      */
     public void commitLrcSettings() {
         lrcContext.initTextPaint();
+        if (getLrcSetting() != null && getLrcSetting().TriangleWidth <= 0) {
+            getLrcSetting().TriangleWidth = getViewWidth() / 50;
+        }
+
     }
 
 
