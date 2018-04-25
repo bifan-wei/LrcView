@@ -38,7 +38,7 @@ allprojects {
 
 
 dependencies {
-	        compile 'com.github.bifan-wei:LrcView:V1.1'
+	        compile 'com.github.bifan-wei:LrcView:V1.2'
 	}
 ```
 
